@@ -8,35 +8,30 @@ const Login = () => {
   const USER_LOGIN = gql`
     mutation Login($input: CreateUserInput!) {
       Login(input: $input) {
-          message
-          path
-      }
+        __typename
+        ...on User {
+            id
+            email
+        }
+        ... on Error {
+            path 
+            message
+        }
     }
+}
   `
-  const [Login] = useMutation(USER_LOGIN);
+  const [Login, { data, loading }] = useMutation(USER_LOGIN);
   
-  function handleSubmit(event) {
-  event.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
 
-  Login({ variables: {
-    "input": {
-      "email": email,
-      "password": password
-    }
-}})
-    .then(result => {
-      console.log(result.data);
-      // Handle successful form submission here
-    })
-    .catch(error => {
-      console.error(error.message);
-      // Handle form submission error here
-    });
+    await Login({ variables: { "input": { "email": email, "password": password } } })
   }
   
   return (
     <div>
       <form onSubmit={handleSubmit}>
+       
       <label>Email:</label>
       <input type="email" value={email} onChange={event => setEmail( event.target.value )} />
 
@@ -45,8 +40,9 @@ const Login = () => {
 
 
       <button type="submit">Submit</button>
-      <a href="/auth/google">Google login</a>
-        </form>
+      <a href="http://localhost:5000/auth/google">Google login</a>
+      </form>
+      <h1>{!loading && data ? data.Login.message : ""}</h1>
       </div>
     )
 }

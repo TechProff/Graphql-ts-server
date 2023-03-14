@@ -3,6 +3,7 @@ import { userSessionIdPrefix, redisSessionPrefix } from "../constants";
 
 export const removeAllUserSessions = async (userId: string, redis: Redis) => {
     const sessionIds = await redis.lrange(`${userSessionIdPrefix}${userId}`, 0, -1)
+    console.log(sessionIds)
 
     const promises = [];
 
@@ -10,5 +11,6 @@ export const removeAllUserSessions = async (userId: string, redis: Redis) => {
         promises.push(await redis.del(`${redisSessionPrefix}${sessionIds[i]}`))
     }
 
+    console.log(promises)
     await Promise.all(promises)
 }

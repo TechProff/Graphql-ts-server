@@ -5,9 +5,7 @@ const Cart = () => {
     const LOGIN_USER = gql`
     query {
     carts {
-        id
       cartItem {
-          id
           product {
               name
               quantity
@@ -26,28 +24,19 @@ const Cart = () => {
     if (loading || !data) return 'Loading...';
   if (error) return `Error! ${error.message}`;
 
-  const res = data.carts.map((cart) => cart)
-  console.log(res)
-  const dt = res.map((item) => item)
-  console.log(dt)
-  // const res = data.carts.map((cart) => (
-  //       <li key={cart.id}>
-  //         <h3>Cart #{cart.id}</h3>
-  //         <ul>
-  //           {cart.cartItems.map((item) => (
-  //             <li key={item.id}>
-  //               {item.product.name} x {item.quantity} (${item.product.price})
-  //             </li>
-  //           ))}
-  //         </ul>
-  //       </li>
-  // ))
-  // console.log(res)
+  const listItems = data.carts.map((d) =>
+    <li key={d.name}>
+      {d.cartItem.product.name} - {d.cartItem.product.price} - {d.cartItem.quantity} 
+    </li>);
+
   return (
-    <ul>
-      {}
-    </ul>
-  );
+    <>
+      <h1>Hello world</h1>
+      <ul>
+        {listItems}
+      </ul>
+    </>
+  )
 }
 
 export default Cart

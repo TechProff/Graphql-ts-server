@@ -1,37 +1,38 @@
 import * as bcryptjs from "bcryptjs"
 import { resolverMap } from "../../types/graphql-utils";
 import { User } from "../../entity/User";
-import { confirmEmailError, forgotPasswordLockedError, invalidLogin } from "./errorMessages";
+import { invalidLogin, confirmEmailError, forgotPasswordLockedError } from "./errorMessages";
 import { userSessionIdPrefix } from "../../constants";
 import { createCart } from "../../func/CartFunc/createCart";
+//import { MutationLoginArgs } from "../../generated-types/graphql";
 
-const InvalidLogin = [
-    {
-        path: "email",
-        message: invalidLogin
-    }
-]
+const InvalidLogin =
+{
+    __typename: "Error",
+    path: "email",
+    message: invalidLogin
+}
 
-const ConfirmEmailError = [
-    {
-        path: "email",
-        message: confirmEmailError
-    }
-];
+const ConfirmEmailError =
+{
+    __typename: "Error",
+    path: "email",
+    message: confirmEmailError
+}
 
-const ForgotPasswordLockError = [
-    {
-        path: "password",
-        message: forgotPasswordLockedError
-    }
-];
+const ForgotPasswordLockError =
+{
+    __typename: "Error",
+    path: "password",
+    message: forgotPasswordLockedError
+}
 
 export const resolvers: resolverMap = {
     Mutation: {
         Login: async (_, args, { session, redis, req }) => {
             const { input } = args
             const { email, password } = input;
-            const user = await User.findOne({ where: { email } })
+            const user = await User.findOne({ where: { email }, relations: ["carts", "carts.items"] })
 
             if (!email || !password) {
                 return InvalidLogin
@@ -40,7 +41,6 @@ export const resolvers: resolverMap = {
             if (!user) {
                 return InvalidLogin
             }
-
 
             if (!user.confirmed) {
                 return ConfirmEmailError
@@ -66,7 +66,11 @@ export const resolvers: resolverMap = {
             }
 
             await createCart(user.id)
-            return null;
+
+            return {
+                __typename: "User",
+                ...user,
+            }
         }
     }
-} 
+}

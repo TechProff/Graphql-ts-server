@@ -5,6 +5,19 @@ input CreateUserInput {
     password: String
 }
 
-type Mutation {
-    Login(input: CreateUserInput!): [Error!]
+
+type User {
+    id:ID!
+    email: String!
 }
+
+type Error {
+    path: String!
+    message: String!
+}
+
+type Mutation {
+    Login(input: CreateUserInput!): LoginResponse!
+}
+
+union LoginResponse = User | Error 

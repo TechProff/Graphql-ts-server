@@ -55,6 +55,7 @@ export const startServer = async () => {
 
     //SERVER STARTRUP
     const server = new ApolloServer({
+        includeStacktraceInErrorResponses: false,
         schema,
         plugins:
             [
@@ -63,17 +64,6 @@ export const startServer = async () => {
     });
 
     await server.start()
-
-    //PASSPORT CONFIG FOR GOOGLE AUTH
-    app.use(passport.initialize())
-
-    const AUTH_OPTIONS = {
-        callbackURL: 'https://localhost:4000/auth/google/callback',
-        clientID: config.CLIENT_ID,
-        clientSecret: config.SECRET_CLIENT
-    }
-
-    passport.use(new Strategy(AUTH_OPTIONS, verifyCallback));
 
     app.set("trust proxy", true)
     //EXPRESS MIDDLEWARE
@@ -96,21 +86,17 @@ export const startServer = async () => {
         })
     );
 
-    app.use(helmet());
-    app.use(morgan('combined'))
-    app.use("/graphql",
-        cors<cors.CorsRequest>({
-            credentials: true,
-            origin: "http://localhost:3001",
-        }),
-        json(),
-        expressMiddleware(server, {
-            context: async ({ req }) => ({ redis, req: req, session: req.session, url: req.protocol + "://" + req.get("host") })
-        })
-    );
 
-    // app.use(express.static("public"))
-    // app.use("*", express.static("public"))
+    //PASSPORT CONFIG FOR GOOGLE AUTH
+    app.use(passport.initialize())
+
+    const AUTH_OPTIONS = {
+        callbackURL: 'http://localhost:5000/auth/google/callback',
+        clientID: config.CLIENT_ID,
+        clientSecret: config.SECRET_CLIENT
+    }
+
+    passport.use(new Strategy(AUTH_OPTIONS, verifyCallback));
 
     app.get("/auth/google",
         passport.authenticate("google", {
@@ -123,9 +109,26 @@ export const startServer = async () => {
     }), (req: Request, res: Response) => {
         (req.session as any).userId = (req.user as any).id;
         // @todo redirect to frontend
-        res.redirect("http://localhost:4000");
+        res.redirect("http://localhost:3001");
         console.log("Google called us back")
     })
+
+
+    // app.use(express.static("public"))
+    // app.use("*", express.static("public"))
+    app.use(helmet());
+    app.use(morgan('combined'))
+
+    app.use("",
+        cors<cors.CorsRequest>({
+            credentials: true,
+            origin: "http://localhost:3000",
+        }),
+        json(),
+        expressMiddleware(server, {
+            context: async ({ req }) => ({ redis, req: req, session: req.session, url: req.protocol + "://" + req.get("host") })
+        })
+    );
 
     const limiter = rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutes
@@ -140,11 +143,6 @@ export const startServer = async () => {
     })
 
     app.use(limiter);
-
-
-    // app.get("/*", (res: Response) => {
-    //     res.sendFile(path.join(__dirname, "../public", "index.html"));
-    // });
 
     await new Promise<void>((resolve) => httpServer.listen({ port: sanitizedConfig.PORT }, resolve))
     console.log(`🚀 Server ready at http://localhost:4000/`);
